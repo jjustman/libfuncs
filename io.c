@@ -193,11 +193,18 @@ ssize_t fdwrite(int fd, char *buf, size_t buf_size) {
 				return wbytes > 0 ? wbytes : -1;
 			}
 		}
-		if (fdready < 1 || (fdready == 1 && fdset[0].revents != POLLOUT)) /* Timeout || error */
-			return -1;
+		if (fdready < 1 || (fdready == 1 && fdset[0].revents != POLLOUT)) /* Timeout || error */ {
+		  //log_perror("fdwrite() timeout, fdready is: ", fdready);
+		  // log_perror("fdset[0].revents: ", fdset[0].revents);			
+
+		  return -1;
+		}
 		ssize_t j = safe_write(fd, buf+wbytes, buf_size-wbytes);
-		if (j < 0) // Error writing
-			return j;
+		if (j < 0) /* Error writing */ {
+		  log_perror("203 - fdwrite() timeout", errno);
+
+		  return j;
+		}
 		if (j == 0) { // No data, retry?
 			if (num_timeouts++ > FDREAD_RETRIES) {
 				return wbytes;
